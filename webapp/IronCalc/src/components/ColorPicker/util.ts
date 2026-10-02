@@ -98,23 +98,45 @@ export const standardColors = [
 
 // This function checks if a color is light or dark.
 // This is needed to determine the icon color, as it's not visible on light colors.
-export const isLightColor = (hex: string): boolean => {
-  if (!hex.startsWith("#")) {
-    return false;
-  }
-
+const hexToRgb = (hex: string): [number, number, number] => {
   const normalized =
     hex.length === 4
       ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
       : hex;
 
   const n = parseInt(normalized.slice(1), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
 
+export const isLightColor = (hex: string): boolean => {
+  if (!hex.startsWith("#")) {
+    return false;
+  }
+
+  const [r, g, b] = hexToRgb(hex);
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   return luminance > 160;
+};
+
+// On dark backgrounds, flips dark text lightness (L → 1 − L), keeping the hue
+export const readableOnBackground = (
+  color: string,
+  background: string,
+): string => {
+  if (
+    !color.startsWith("#") ||
+    !background.startsWith("#") ||
+    isLightColor(background)
+  ) {
+    return color;
+  }
+  const rgb = hexToRgb(color);
+  const lightness = (Math.max(...rgb) + Math.min(...rgb)) / 2 / 255;
+  if (lightness >= 0.5) {
+    return color;
+  }
+  // Tint that yields 1 − L
+  return hexWithTintToRgb(color, (1 - 2 * lightness) / (1 - lightness));
 };
 
 export const isWhiteColor = (color: string): boolean => {

@@ -8,6 +8,7 @@ import type {
 } from "@ironcalc/wasm";
 import type { CSSProperties } from "react";
 import { defaultThemeVariables } from "../../../theme/theme";
+import { readableOnBackground, themeColor } from "../../ColorPicker/util";
 import { NumberFormats } from "../../FormatMenu/formatUtil";
 
 export const HORIZONTAL_JUSTIFY: Partial<Record<HorizontalAlignment, string>> =
@@ -114,13 +115,13 @@ export function getTileStyle(model: Model, style: CellStyle): CSSProperties {
   if (style.font.strike) {
     decorations.push("line-through");
   }
+  const fontColor = model.resolveColor(style.font.color);
   const tileStyle: CSSProperties = {
     backgroundColor: model.resolveColor(style.fill.color) || undefined,
-    color:
-      model.resolveColor(style.font.color) ||
-      (style.fill.color
-        ? defaultThemeVariables["--palette-sheet-default-text-color"]
-        : undefined),
+    color: style.fill.color
+      ? fontColor || defaultThemeVariables["--palette-sheet-default-text-color"]
+      : fontColor &&
+        readableOnBackground(fontColor, themeColor("--palette-common-white")),
     fontWeight: style.font.b ? "bold" : undefined,
     fontStyle: style.font.i ? "italic" : undefined,
     textDecoration: decorations.length > 0 ? decorations.join(" ") : undefined,
